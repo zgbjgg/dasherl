@@ -9,11 +9,6 @@ from dash.dependencies import Input, Output
 from erlport.erlterms import Atom
 from erlport.erlang import call
 
-# dynamicall import for a package, as a rule all layouts should be
-# placed under this directory. The directory path can be configured
-# from erlang and from here just get the import working
-import dasherl_apps
-
 # define the behaviour of the main app when launching this file,
 # this function defines all the behaviour of the app.
 # @CAUTION: Do not touch this code unless you know what you're doing
@@ -24,10 +19,21 @@ import multiprocessing
 import gunicorn.app.base
 from gunicorn.six import iteritems
 
+app = None
+
 def initialize(workers, bind, external_stylesheets):
     # define main app and prepare to run
+    global app
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     app.config.suppress_callback_exceptions = True
+
+    # the flask app
+    server = app.server
+
+    # dynamicall import for a package, as a rule all layouts should be
+    # placed under this directory. The directory path can be configured
+    # from erlang and from here just get the import working
+    import dasherl_apps
 
     # define the main layout
     app.layout = html.Div([
@@ -70,15 +76,15 @@ def initialize(workers, bind, external_stylesheets):
         'bind': bind,
         'workers': workers,
         'daemon': True,
-        'loglevel': 'critical',
-        'pidfile': '/tmp/dasherl.pid'
+        'loglevel': 'critical'
     }
-    DasherlApplication(app, options).run()
+
+    DasherlApplication(server, options).run()
 
 # render app from config set in erlang worker
 def render_layout(path):
     # simply call to erlang module and ask for app rendering that path
-    dapp = call(Atom('dasherl_worker'), Atom('render'), [path])
+    dapp = call(Atom('dasherl_router'), Atom('render'), [path])
     mod = getattr(dasherl_apps, dapp, None)
     if mod is None:
         return None
