@@ -16,11 +16,10 @@
 -include("dasherl.hrl").
 
 % the values can be override during initialization
--record(state, {workers = 3 :: non_neg_integer(),
-    bind = "127.0.0.1:80" :: string(),    
-    unix_pid = "/tmp/dasherl_gunicorn.pid" :: string(),
-    port = undefined,
-    os_pid :: non_neg_integer()}).
+-record(state, {py_pid = undefined :: pid(),
+    mon_ref = undefined,
+    workers = 3 :: non_neg_integer(),
+    bind = "127.0.0.1:80" :: string()}).
 
 start_link(Settings) ->
     gen_server:start_link(?MODULE, Settings, []).
@@ -37,30 +36,24 @@ init(Settings) ->
     Workers = proplists:get_value(workers, Settings, ?DEFAULT_WORKERS),
     Bind = proplists:get_value(bind, Settings, ?DEFAULT_BIND),
 
-    % the chdir is the priv directory of root dasherl app
-    Chdir = code:priv_dir(dasherl),
+    Path = code:priv_dir(dasherl),
 
-    % config the pid file
-    UnixPid = proplists:get_value(unix_pid, Settings, "/tmp/dasherl_gunicorn.pid"),
+    % start the py process and initializes its importing modules
+    case python:start([{python_path, Path}]) of
+        {ok, PyPid} ->
+            MonRef = erlang:monitor(process, PyPid),
+            lager:info("initialized default modules for py pid ~p", [PyPid]),
 
-    % parse arguments and build a full cmd to start gunicorn
-    {Cmd, Args} = build_cmd(UnixPid, Workers, Bind, Chdir),
-    lager:info("starting gunicorn ~p ~p", [Cmd, Args]),
-    Port = open_port({spawn, Cmd ++ lists:append(Args)},
-        [exit_status, use_stdio, stderr_to_stdout]),
-    Pid = case erlang:port_info(Port) of
-        undefined ->
-            lager:warning("error to start gunicorn, actually down!", []),
-            undefined;
-        PInfo     ->
-            lager:info("gunicorn is up and running, info ~p", [PInfo]),
-            proplists:get_value(os_pid, PInfo)
-    end,
-    {ok, #state{ workers = Workers,
-        bind = Bind,
-        unix_pid = UnixPid,
-        port = Port,
-        os_pid = Pid}}.
+            % initialize gunicorn with dasherl and hold in a process
+            PidGunicorn = initialize_from_scratch(PyPid, Workers, Bind),
+            lager:info("gunicorn is up and running at linked process: ~p", [PidGunicorn]),
+
+            {ok, #state{py_pid = PyPid, mon_ref = MonRef, workers = Workers,
+                bind = Bind}};
+        Error      ->
+            lager:error("cannot initializes py due to ~p", [Error]),
+            {stop, Error}
+    end.
 
 handle_call(stop_link, _From, State) ->
     {stop, normal, ok, State};
@@ -70,12 +63,15 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Request, State) ->
     {noreply, State}.
 
+handle_info({'DOWN', MonRef, _Type, _Object, _Info}, State=#state{mon_ref = MonRef}) ->
+    % process py pid is down, which one is the process to restart?
+    {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, State) ->
-    % ensure terminate os gunicorn process
-    ok = kill_cmd(State#state.os_pid, State#state.port),
+    % when finish process just stop py_pid
+    ok = python:stop(State#state.py_pid),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -85,24 +81,12 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Funcionts
 %% ===================================
 
-% @hidden
-% build cmd for running gunicorn
-build_cmd(UnixPid, Workers, Bind, Chdir) ->
-    Executable = case os:find_executable(?GUNICORN) of
-        false -> undefined;
-        Value -> Value
-    end,
-    {Executable, [?BIND(Bind), ?WORKERS(Workers),
-        ?CHDIR(Chdir), ?PIDFILE(UnixPid), ?APP]}.
-
-% @hidden
-% kill gunicorn os pid and port
-kill_cmd(OSPid, Port) ->
-    lager:debug("trying to kill gunicorn server instance at ~p", [OSPid]),
-    case OSPid of
-        undefined -> ok; % nothing to be done
-        OSPid     ->
-            os:cmd("kill -TERM " ++ integer_to_list(OSPid)),
-            catch port_close(Port),
-            ok
-    end.
+% since calling to gunicorn from shell is a blocking call, just
+% call into a spawn process, so we can handle separately (in async mode)
+% and follow the entire gen_server process
+initialize_from_scratch(PyPid, Workers, Bind) ->
+    BindAtom = list_to_atom(Bind),
+    % for now use a static stylesheet
+    Stylesheet = ['https://codepen.io/chriddyp/pen/bWLwgP.css'],
+    spawn_link(python, call, [PyPid, dasherl, initialize,
+        [Workers, BindAtom, Stylesheet]]).
