@@ -19,7 +19,8 @@
 -record(state, {py_pid = undefined :: pid(),
     mon_ref = undefined,
     workers = 3 :: non_neg_integer(),
-    bind = "127.0.0.1:80" :: string()}).
+    bind = "127.0.0.1:80" :: string(),
+    gunicorn_pid = undefined :: pid()}).
 
 start_link(Settings) ->
     gen_server:start_link(?MODULE, Settings, []).
@@ -49,7 +50,7 @@ init(Settings) ->
             lager:info("gunicorn is up and running at linked process: ~p", [PidGunicorn]),
 
             {ok, #state{py_pid = PyPid, mon_ref = MonRef, workers = Workers,
-                bind = Bind}};
+                bind = Bind, gunicorn_pid = PidGunicorn}};
         Error      ->
             lager:error("cannot initializes py due to ~p", [Error]),
             {stop, Error}
@@ -70,6 +71,7 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, State) ->
+    ok = stop_signal(State#state.gunicorn_pid),
     % when finish process just stop py_pid
     ok = python:stop(State#state.py_pid),
     ok.
@@ -90,3 +92,12 @@ initialize_from_scratch(PyPid, Workers, Bind) ->
     Stylesheet = ['https://codepen.io/chriddyp/pen/bWLwgP.css'],
     spawn_link(python, call, [PyPid, dasherl, initialize,
         [Workers, BindAtom, Stylesheet]]).
+
+% since is a blocking process, gunicorn cannot be stopped just with py
+% so stop process linked, after that stop with signal handler using
+% sigterm.
+stop_signal(Pid) ->
+    exit(Pid, kill),
+    [UnixPid|_] = string:split(os:cmd("cat " ++ ?DEFAULT_UNIX_PID), "\n"),
+    _ = os:cmd("kill -9 " ++ UnixPid),
+    ok.
