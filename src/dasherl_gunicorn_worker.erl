@@ -45,6 +45,9 @@ init(Settings) ->
             MonRef = erlang:monitor(process, PyPid),
             lager:info("initialized default modules for py pid ~p", [PyPid]),
 
+            % initialize decoder for erl dash components
+            ok = python:call(PyPid, dasherl_components, setup_dasherl_components_type, []),
+
             % initialize gunicorn with dasherl and hold in a process
             PidGunicorn = initialize_from_scratch(PyPid, Workers, Bind),
             lager:info("gunicorn is up and running at linked process: ~p", [PidGunicorn]),
