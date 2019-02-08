@@ -77,7 +77,8 @@ def initialize(workers, bind, external_stylesheets):
         'bind': bind,
         'workers': workers,
         'daemon': True,
-        'loglevel': 'critical'
+        'loglevel': 'critical',
+        'pidfile': '/tmp/dasherl_gunicorn.pid'
     }
 
     DasherlApplication(server, options).run()
