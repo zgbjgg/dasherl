@@ -51,8 +51,9 @@ handle_call(stop_link, _From, State) ->
 handle_call({render, Path}, _From, State) ->
     % since a plist, just pick with proplists
     App = case lists:keyfind(Path, 1, State#state.routes) of
-        {_Path, AppIn} -> AppIn;
-        false          -> none
+        {_Path, {erl, AppIn}} -> {AppIn, false};
+        {_Path, AppIn}        -> {AppIn, true};
+        false                 -> {none, false}
     end,
     {reply, App, State};
 
