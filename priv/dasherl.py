@@ -5,9 +5,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-# import for erlang
-from erlport.erlterms import Atom
-from erlport.erlang import call
+# import for erlang interface
+import dasherl_router
 
 # define the behaviour of the main app when launching this file,
 # this function defines all the behaviour of the app.
@@ -33,6 +32,7 @@ def initialize(workers, bind, external_stylesheets):
     # dynamicall import for a package, as a rule all layouts should be
     # placed under this directory. The directory path can be configured
     # from erlang and from here just get the import working
+    global dasherl_apps
     import dasherl_apps
 
     # define the main layout
@@ -48,7 +48,8 @@ def initialize(workers, bind, external_stylesheets):
     @app.callback(Output('page-content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        render = render_layout(pathname)
+        render = dasherl_router.render_layout(pathname, dasherl_apps)
+        print(render)
         if render is None:
             return '404 NOT FOUND by @dasherl'
         else:
@@ -80,13 +81,3 @@ def initialize(workers, bind, external_stylesheets):
     }
 
     DasherlApplication(server, options).run()
-
-# render app from config set in erlang worker
-def render_layout(path):
-    # simply call to erlang module and ask for app rendering that path
-    dapp = call(Atom('dasherl_router'), Atom('render'), [path])
-    mod = getattr(dasherl_apps, dapp, None)
-    if mod is None:
-        return None
-    else:
-        return getattr(mod, 'layout', None)
