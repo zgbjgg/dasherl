@@ -49,7 +49,6 @@ def initialize(workers, bind, external_stylesheets):
                   [Input('url', 'pathname')])
     def display_page(pathname):
         render = dasherl_router.render_layout(pathname, dasherl_apps)
-        print(render)
         if render is None:
             return '404 NOT FOUND by @dasherl'
         else:
