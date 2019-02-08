@@ -91,9 +91,6 @@ input(Keywords) ->
 upload(Keywords) ->
     #dasherl_core_component{type='Upload', children=Keywords}.
 
-input(Keywords) ->
-    #dasherl_core_component{type='Input', children=Keywords}.
-
 tabs(Keywords) ->
     #dasherl_core_component{type='Tabs', children=Keywords}.
 
