@@ -13,6 +13,7 @@ init_per_suite(_Config) ->
     ok = application:set_env(dasherl, routes, []),
     ok = application:start(dasherl),
     % maybe pid is stale
+    timer:sleep(6000),
     [UnixPid|_] = string:split(os:cmd("cat /tmp/dasherl_gunicorn.pid"), "\n"),
     _ = os:cmd("kill -9 " ++ UnixPid), 
     [].
