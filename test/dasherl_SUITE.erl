@@ -35,7 +35,7 @@ end_per_suite(_Config) ->
 test_dasherl_app(_) ->
     ?assertEqual(ok, application:ensure_started(dasherl)).
 
-test_dasherl_gunicorn_worker(Config) ->
+test_dasherl_gunicorn_worker(_) ->
     {ok, Pid} = dasherl_gunicorn_worker:start_link([{bind, "127.0.0.1:8000"},
         {workers, 0}]),
     ok = dasherl_gunicorn_worker:stop(Pid),
@@ -44,7 +44,7 @@ test_dasherl_gunicorn_worker(Config) ->
 test_dasherl_app_stop(_) ->
     ?assertEqual(ok, application:stop(dasherl)).
 
-test_dasherl_gunicorn_worker_stop(Config) ->
+test_dasherl_gunicorn_worker_stop(_) ->
     {ok, Pid} = dasherl_gunicorn_worker:start_link([{bind, "127.0.0.1:8000"},
         {workers, 0}]),
     ok = dasherl_gunicorn_worker:stop(Pid),
@@ -52,14 +52,14 @@ test_dasherl_gunicorn_worker_stop(Config) ->
 
 % just to increment % of coverage
 
-test_dasherl_gunicorn_worker_call(Config) ->
+test_dasherl_gunicorn_worker_call(_) ->
     {ok, Pid} = dasherl_gunicorn_worker:start_link([{bind, "127.0.0.1:8000"},
         {workers, 0}]),
     R = gen_server:call(Pid, hello),
     ok = dasherl_gunicorn_worker:stop(Pid),
     ?assertEqual(ok, R).
 
-test_dasherl_gunicorn_worker_cast(Config) ->
+test_dasherl_gunicorn_worker_cast(_) ->
     {ok, Pid} = dasherl_gunicorn_worker:start_link([{bind, "127.0.0.1:8000"},
         {workers, 0}]),
     R = gen_server:cast(Pid, hello),
