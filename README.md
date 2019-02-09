@@ -2,7 +2,9 @@
 
 **Dasherl** - A deployment environemt and builder for Dash apps running from Erlang/Elixir
 
-[![License: MIT](https://img.shields.io/github/license/zgbjgg/jun.svg)](https://raw.githubusercontent.com/zgbjgg/dasherl/master/LICENSE)
+[![Build Status](https://travis-ci.org/zgbjgg/dasherl.svg?branch=master)](https://travis-ci.org/zgbjgg/dasherl)
+[![Codecov](https://img.shields.io/codecov/c/github/zgbjgg/dasherl.svg)](https://codecov.io/gh/zgbjgg/dasherl)
+[![License: MIT](https://img.shields.io/github/license/zgbjgg/dasherl.svg)](https://raw.githubusercontent.com/zgbjgg/dasherl/master/LICENSE)
 
 Dasherl is a deployment environment (using gunicorn) for dash apps using Erlang or Elixir, but also it's a builder for the
 dash apps so you can write erlang code (just through nested records) and setup the route to use the erlang code then Dasherl can
