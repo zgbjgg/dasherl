@@ -29,12 +29,14 @@ test_dasherl(_) ->
     % set router to render layout
     ok = dasherl_router:add_route("/my-dasherl-route", {erl, Div}),
 
-    {ok, Pid} = dasherl_gunicorn_worker:start_link([{bind, "127.0.0.1:8080"},
+    {ok, Pid} = dasherl_gunicorn_worker:start_link([{bind, "127.0.0.1:8000"},
         {workers, 1}]),
+
+    timer:sleep(5000),
 
     % use ibrowse to check
     {ok, _} = ibrowse:start(),
-    {ok, Code, _, _} = ibrowse:send_req("http://127.0.0.1:8080/my-dasherl-route", [], get),
+    {ok, Code, _, _} = ibrowse:send_req("http://127.0.0.1:8000/my-dasherl-route", [], get),
 
     % stop worker
     ok = dasherl_gunicorn_worker:stop(Pid),
