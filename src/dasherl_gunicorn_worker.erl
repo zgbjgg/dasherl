@@ -101,6 +101,6 @@ initialize_from_scratch(PyPid, Workers, Bind) ->
 % sigterm.
 stop_signal(Pid) ->
     exit(Pid, kill),
-    [UnixPid|_] = string:split(os:cmd("cat " ++ ?DEFAULT_UNIX_PID), "\n"),
+    [UnixPid|_] = string:tokens(os:cmd("cat " ++ ?DEFAULT_UNIX_PID), "\n"),
     _ = os:cmd("kill -9 " ++ UnixPid),
     ok.
