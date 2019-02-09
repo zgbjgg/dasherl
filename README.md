@@ -2,6 +2,7 @@
 
 **Dasherl** - A deployment environemt and builder for Dash apps running from Erlang/Elixir
 
+[![Hex.pm](https://img.shields.io/hexpm/v/dasherl.svg)](https://hex.pm/packages/dasherl)
 [![Build Status](https://travis-ci.org/zgbjgg/dasherl.svg?branch=master)](https://travis-ci.org/zgbjgg/dasherl)
 [![Codecov](https://img.shields.io/codecov/c/github/zgbjgg/dasherl.svg)](https://codecov.io/gh/zgbjgg/dasherl)
 [![License: MIT](https://img.shields.io/github/license/zgbjgg/dasherl.svg)](https://raw.githubusercontent.com/zgbjgg/dasherl/master/LICENSE)
