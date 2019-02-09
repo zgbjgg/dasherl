@@ -7,7 +7,7 @@ install:
   - sudo pip install dash-core-components==0.43.0  # Supercharged components
   - sudo pip install dash-table==3.1.11  # Interactive DataTable component (new!)
   - sudo pip install dash-daq==0.1.0
-  - sudo pìp install gunicorn
+  - sudo pip install gunicorn
   - sudo pip install codecov
 after_success: "codecov"
 otp_release:
