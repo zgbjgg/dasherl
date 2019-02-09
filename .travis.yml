@@ -2,6 +2,7 @@ language: erlang
 script: "make && make test"
 install:
   - sudo apt-get install python-tk
+  - sudo pip install --upgrade six
   - sudo pip install dash==0.36.0  # The core dash backend
   - sudo pip install dash-html-components==0.13.5  # HTML components
   - sudo pip install dash-core-components==0.43.0  # Supercharged components
