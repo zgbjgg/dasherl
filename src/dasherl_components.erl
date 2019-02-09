@@ -55,9 +55,6 @@ divc(Keywords) ->
 
 % core
 
-input(Keywords) ->
-    #dasherl_core_component{type='Input', children=Keywords}.
-
 dropdown(Keywords) ->
     #dasherl_core_component{type='Dropdown', children=Keywords}.
 
