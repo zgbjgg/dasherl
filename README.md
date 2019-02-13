@@ -38,8 +38,6 @@ That's all, if all goes ok then point your browser to http://127.0.0.1:8000 and 
 ok
 ```
 
-The routes are defined as an application environment for dasherl, for now the only way to build a layout to render in a specific route is building from erlang code
-
 ### Write it like erlang use it like Dash
 
 The routes are defined as an application environment for dasherl, for now the only way to build a layout to render in a specific route is building from erlang code.
