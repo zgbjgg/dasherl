@@ -18,22 +18,22 @@ import multiprocessing
 import gunicorn.app.base
 from gunicorn.six import iteritems
 
-app = None
+# in the state store the key/value as dictionary
+# holding the gunicorn process and the dash app
+state = {}
 
-def initialize(workers, bind, external_stylesheets):
+def initialize(workers, bind, external_stylesheets, appid):
     # define main app and prepare to run
-    global app
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     app.config.suppress_callback_exceptions = True
 
     # the flask app
     server = app.server
 
-    # dynamicall import for a package, as a rule all layouts should be
-    # placed under this directory. The directory path can be configured
-    # from erlang and from here just get the import working
-    global dasherl_apps
-    import dasherl_apps
+    # this dictionary is used globally since can be modified outside
+    # the child process. This should be join to the dict in manager
+    global routes
+    routes = {}
 
     # define the main layout
     app.layout = html.Div([
@@ -42,17 +42,20 @@ def initialize(workers, bind, external_stylesheets):
     ])
 
     # the main app callback just parses the pathname and then
-    # redirect to the correct app (from dasherl_apps). This config
-    # also is stored from erlang side, so when an input comes just go to erlang
-    # ask about config and run dynamicall using getattr of module imported!
+    # redirect to the correct app represented by an erlang module or a single layout.
+    # The layout can be built from erlang side using components and dependencies.
     @app.callback(Output('page-content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        render = dasherl_router.render_layout(pathname, dasherl_apps)
-        if render is None:
-            return '404 NOT FOUND by @dasherl'
+        # render = dasherl_router.render_layout(pathname)
+        if pathname is not None:
+            content = routes.get(pathname, None)
+            if content is None:
+                return '404 NOT FOUND by @dasherl'
+            else:
+                return content
         else:
-            return render
+            return '404 NOT FOUND by @dasherl'
 
     # define the class for standalone application for gunicorn
     class DasherlApplication(gunicorn.app.base.BaseApplication):
@@ -75,9 +78,51 @@ def initialize(workers, bind, external_stylesheets):
     options = {
         'bind': bind,
         'workers': workers,
-        'daemon': True,
-        'loglevel': 'critical',
-        'pidfile': '/tmp/dasherl_gunicorn.pid'
+        'loglevel': 'critical'
     }
 
-    DasherlApplication(server, options).run()
+    application = DasherlApplication(server, options)
+    state[appid] = application
+    return 'ok'
+
+# in order to run the application, keep it into a process,
+# check for key stored in state (for appid), and run.
+# This will hold a separated process running with gunicorn, for that
+# reason share an object to use the routes
+def run(appid, pid):
+    application = state[appid]
+
+    # create manager and start the dict
+    manager = multiprocessing.Manager()
+
+    # maybe some routes was loaded before process start, then copy that
+    # to shared object in order to work into process
+    global routes
+    preloaded_routes = routes
+    routes = manager.dict()
+
+    if not isinstance(preloaded_routes, multiprocessing.managers.DictProxy):
+        for k, v in preloaded_routes.iteritems():
+            routes[k] = v
+
+    # create the process and start without joining!
+    process = multiprocessing.Process(name=appid, target=application.run)
+    state[pid] = process
+    process.start()
+    return 'ok'
+
+# stops the running process and clean state
+def stop(pid):
+    process = state.get(pid, None)
+    if process is not None:
+        process.terminate()
+        state.pop(pid)
+        return 'ok'
+    else:
+        return 'no_proc'
+
+# add a route with content, the content will be a complex
+# layout made from erlang side using custom components.
+def add_route(route, content):
+    routes[route] = content # simple assignment
+    return 'ok'
