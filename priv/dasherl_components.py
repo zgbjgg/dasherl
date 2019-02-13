@@ -15,10 +15,9 @@ def setup_dasherl_components_type():
 # decode the value and check if is a dasherl component
 # since a record is a tuple we can handle easily here
 def dasherl_components_decoder(value):
-    if isinstance(value, tuple) and len(value) == 2:
-        if isinstance(value[0], tuple) and len(value[0]) == 3:
-            full_component = value[0]
-            value = (parse_component(full_component), value[1])
+    if isinstance(value, tuple) and len(value) == 3:
+        full_component = value
+        value = parse_component(full_component)
     return value
 
 # parse component iterative
