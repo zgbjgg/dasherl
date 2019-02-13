@@ -33,7 +33,7 @@ start_link() ->
 %% Before OTP 18 tuples must be used to specify a child. e.g.
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    {ok, {{one_for_all, 0, 1}, [?CHILD(dasherl_router, worker)]}}.
+    {ok, {{one_for_all, 0, 1}, []}}.
 
 %%====================================================================
 %% Internal functions
