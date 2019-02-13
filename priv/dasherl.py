@@ -49,11 +49,11 @@ def initialize(workers, bind, external_stylesheets, appid):
     def display_page(pathname):
         # render = dasherl_router.render_layout(pathname)
         if pathname is not None:
-            content = routes.get(pathname, None)
-            if content is None:
+            layout = routes.get(pathname, None)
+            if layout is None:
                 return '404 NOT FOUND by @dasherl'
             else:
-                return content
+                return layout
         else:
             return '404 NOT FOUND by @dasherl'
 
@@ -123,6 +123,15 @@ def stop(pid):
 
 # add a route with content, the content will be a complex
 # layout made from erlang side using custom components.
-def add_route(route, content):
-    routes[route] = content # simple assignment
+def setup_route(route, layout):
+    routes[route] = layout # simple assignment
     return 'ok'
+
+# remove a route already loaded into routes.
+def del_route(route):
+    layout = routes.get(route, None)
+    if layout is not None:
+        del routes[route]
+        return 'ok'
+    else:
+        return 'ok'

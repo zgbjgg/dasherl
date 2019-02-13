@@ -6,7 +6,9 @@
 -export([start_link/1,
     stop/1,
     run_server/1,
-    stop_server/1]).
+    stop_server/1,
+    setup_route/3,
+    del_route/2]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -35,6 +37,12 @@ run_server(Pid) ->
 
 stop_server(Pid) ->
     gen_server:call(Pid, stop_server).
+
+setup_route(Pid, Route, Layout) ->
+    gen_server:call(Pid, {setup_route, Route, Layout}).
+
+del_route(Pid, Route) ->
+    gen_server:call(Pid, {del_route, Route}).
 
 init(Settings) ->
     process_flag(trap_exit, true),
@@ -86,6 +94,22 @@ handle_call(stop_server, _From, State) ->
             {reply, {error, {Class, Argument}}, State};
         "no_proc"                                        ->
             {reply, {error, no_proc}, State};
+        "ok"                                             ->
+            {reply, ok, State}
+    end;
+handle_call({setup_route, Route, Layout}, _From, State) ->
+    PyPid = State#state.py_pid,
+    case catch python:call(PyPid, dasherl, setup_route, [Route, Layout]) of
+        {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
+            {reply, {error, {Class, Argument}}, State};
+        "ok"                                             ->
+            {reply, ok, State}
+    end;
+handle_call({del_route, Route}, _From, State) ->
+    PyPid = State#state.py_pid,
+    case catch python:call(PyPid, dasherl, del_route, [Route]) of
+        {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
+            {reply, {error, {Class, Argument}}, State};
         "ok"                                             ->
             {reply, ok, State}
     end;
