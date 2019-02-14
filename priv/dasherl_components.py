@@ -1,6 +1,7 @@
 # import for dash components html and core
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output
 
 # import erlang helpers
 from erlport.erlterms import Atom
@@ -16,8 +17,9 @@ def setup_dasherl_components_type():
 # since a record is a tuple we can handle easily here
 def dasherl_components_decoder(value):
     if isinstance(value, tuple) and len(value) == 3:
-        full_component = value
-        value = parse_component(full_component)
+        value = parse_component(value)
+    elif isinstance(value, list):
+        return [ parse_component(component) for component in value ]
     return value
 
 # parse component iterative
@@ -32,6 +34,8 @@ def parse_component(component):
                 component = to_dash_core_component(fn, keywords)
             elif component[0] == "dasherl_html_component":
                 component = to_dash_html_component(fn, keywords)
+        elif component[0] == "dasherl_output_dependency" or component[0] == "dasherl_input_dependency":
+            component = to_dash_dependency(component[0], component[1], component[2])
     return component
 
 # parse nested components such as children of div html
@@ -54,6 +58,19 @@ def to_dash_html_component(fn, keywords):
     fn_html = getattr(html, fn)
     kwargs = build_kwargs(keywords)
     return fn_html(**kwargs)
+
+# to dash dependency
+def to_dash_dependency(dep, component, event):
+    if dep == "dasherl_output_dependency":
+        return to_dash_output(component, event)
+    elif dep == "dasherl_input_dependency":
+        return to_dash_input(component, event)
+
+def to_dash_output(component, event):
+    return Output(component, event)
+
+def to_dash_input(component, event):
+    return Input(component, event)
 
 def build_kwargs(keywords):
     kwargs = dict([ (k, v) for (k, v) in keywords ])
