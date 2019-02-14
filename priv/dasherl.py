@@ -5,9 +5,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-# import for erlang interface
-import dasherl_router
-
 # define the behaviour of the main app when launching this file,
 # this function defines all the behaviour of the app.
 # @CAUTION: Do not touch this code unless you know what you're doing
@@ -24,6 +21,7 @@ state = {}
 
 def initialize(workers, bind, external_stylesheets, appid):
     # define main app and prepare to run
+    global app
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
     app.config.suppress_callback_exceptions = True
 
@@ -135,3 +133,24 @@ def del_route(route):
         return 'ok'
     else:
         return 'ok'
+
+# setup a callback for the app, this MUST be called before app
+# is running since for now cannot work at runtime!.
+def setup_callback(outputs, inputs, fun):
+    # check if fun is a valid lambda, otherwise raise an exception
+    fun0 = islambda_from_erl(fun)
+    app.callback(outputs, inputs)(fun0)
+    return 'ok'
+
+# simple receiver for a lambda in string mode and pass
+# back to opaque term, it means a valid evaluated lambda
+# into py environment, taken from: https://github.com/zgbjgg/jun/blob/master/priv/jun_pandas.py#L187
+def islambda_from_erl(fn):
+    try:
+        fn0 = eval(fn)
+        if ( callable(fn0) and fn0.__name__ == '<lambda>' ):
+            return fn0
+        else:
+            raise Exception('err.invalid.dasherl.Lambda', 'not a lambda valid function from erl instance')
+    except:
+        raise Exception('err.invalid.dasherl.lambda', 'not a lambda valid function from erl instance')
