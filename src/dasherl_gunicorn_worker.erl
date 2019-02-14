@@ -8,7 +8,8 @@
     run_server/1,
     stop_server/1,
     setup_route/3,
-    del_route/2]).
+    del_route/2,
+    setup_callback/4]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -43,6 +44,9 @@ setup_route(Pid, Route, Layout) ->
 
 del_route(Pid, Route) ->
     gen_server:call(Pid, {del_route, Route}).
+
+setup_callback(Pid, Outputs, Inputs, Lambda) ->
+    gen_server:call(Pid, {setup_callback, Outputs, Inputs, Lambda}).
 
 init(Settings) ->
     process_flag(trap_exit, true),
@@ -108,6 +112,14 @@ handle_call({setup_route, Route, Layout}, _From, State) ->
 handle_call({del_route, Route}, _From, State) ->
     PyPid = State#state.py_pid,
     case catch python:call(PyPid, dasherl, del_route, [Route]) of
+        {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
+            {reply, {error, {Class, Argument}}, State};
+        "ok"                                             ->
+            {reply, ok, State}
+    end;
+handle_call({setup_callback, Outputs, Inputs, Lambda}, _From, State) ->
+    PyPid = State#state.py_pid,
+    case catch python:call(PyPid, dasherl, setup_callback, [Outputs, Inputs, Lambda]) of
         {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
             {reply, {error, {Class, Argument}}, State};
         "ok"                                             ->
