@@ -18,8 +18,9 @@ from gunicorn.six import iteritems
 # holding the gunicorn process and the dash app
 state = {}
 
-# manage routing to layouts
+# manage routing to layouts and callbacks
 import dasherl_router
+import dasherl_callback_handler
 
 def initialize(workers, bind, external_stylesheets, appid):
     # define main app and prepare to run
@@ -84,3 +85,16 @@ def initialize(workers, bind, external_stylesheets, appid):
 def run(appid):
     application = state[appid]
     application.run()
+
+# setup callbacks (MUST be called before run server)
+def setup_callback(outputs, inputs, key):
+    app.callback(outputs, inputs)(_callback_handler(key))
+    return 'ok'
+
+# a default callback handler, on each event call to desired
+# config in erlang side, process data and return the response
+def _callback_handler(key):
+    def callback(*args):
+        response = dasherl_callback_handler.response(key, args)
+        return response
+    return callback
