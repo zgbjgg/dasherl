@@ -5,7 +5,8 @@
 %% API
 -export([start_link/0,
     stop/0,
-    compile_layout/1]).
+    compile_layout/1,
+    compile_dependency/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -29,6 +30,9 @@ stop() ->
 
 compile_layout(Layout) ->
     gen_server:call(?MODULE, {compile_layout, Layout}).
+
+compile_dependency(Dep) ->
+    gen_server:call(?MODULE, {compile_dep, Dep}).
 
 init([]) ->
     process_flag(trap_exit, true),
@@ -57,6 +61,14 @@ handle_call({compile_layout, Layout}, _From, State) ->
             {reply, {error, {Class, Argument}}, State};
         PyLayout                                         ->
             {reply, PyLayout, State}
+    end;
+handle_call({compile_dep, Dep}, _From, State) ->
+    PyPid = State#state.py_pid,
+    case catch python:call(PyPid, dasherl_components, compile, [Dep]) of
+        {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
+            {reply, {error, {Class, Argument}}, State};
+        PyDep                                            ->
+            {reply, PyDep, State}
     end;
 handle_call(stop_link, _From, State) ->
     {stop, normal, ok, State};
