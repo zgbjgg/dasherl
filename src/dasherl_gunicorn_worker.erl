@@ -126,7 +126,10 @@ initialize_from_scratch(PyPid, Workers, Bind, Stylesheets) ->
 % so stop process linked, after that stop with signal handler using
 % sigterm.
 stop_signal(Pid) ->
-    exit(Pid, kill),
+    case is_pid(Pid) of
+        true  -> exit(Pid, kill);
+        false -> ok
+    end,
     [UnixPid|_] = string:tokens(os:cmd("cat " ++ ?DEFAULT_UNIX_PID), "\n"),
     _ = os:cmd("kill -9 " ++ UnixPid),
     _ = file:delete(?DEFAULT_UNIX_PID),
