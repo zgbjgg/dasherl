@@ -40,45 +40,90 @@ ok
 
 ### Write it like erlang use it like Dash
 
-The routes are defined as an application environment for dasherl, for now the only way to build a layout to render in a specific route is building from erlang code.
+The routes and callbacks are expressed as an erlang terms, so building erlang terms with the dasherl api is enough to build layouts or callbacks for events in the dash app. To simplify work dasherl has a module called compiler so building an entire module (erlang module) with a specific behaviour will be enough to compile that module at runtime and setup layouts and callbacks into dash app.
 
-The best approach is writing all from erlang and render in python so for that reason there is a interface to write erlang code and use it like python in dash server.
+Let's take the Dash example using python code:
 
-The first piece is adding a new route rendering erlang code, so let's write the erlang code that will render a layout. In the dasherl_components there are many functions as in py to create components (core & html) as dash does in python, for example, lets create a layout with a div and inside a div a single input text.
+```python
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Input, Output
 
-First create the input text:
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-```erlang
-(dasherl@hurakann)3> Input = dasherl_components:input([{placeholder, 'Write here'}, {value, ''}, {type, 'text'}]).
-{dasherl_core_component,'Input',
-                        [{placeholder,'Write here'},{value,''},{type,text}]}
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+app.layout = html.Div([
+    dcc.Input(id='my-id', value='initial value', type='text'),
+    html.Div(id='my-div')
+])
+
+
+@app.callback(
+    Output(component_id='my-div', component_property='children'),
+    [Input(component_id='my-id', component_property='value')]
+)
+def update_output_div(input_value):
+    return 'You\'ve entered "{}"'.format(input_value)
+
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
 ```
 
-All core and html components receive a single keywords proplists that represents the arguments of a python dash call.
-
-Now create the div as container of input:
+The above app can be translated to dasherl into erlang module as follows:
 
 ```erlang
-(dasherl@hurakann)2> Div = dasherl_components:divc([{children, [Input]}]).
-{dasherl_html_component,'Div',
-                        [{children,[{dasherl_core_component,'Input',
-                                                            [{placeholder,'Write here'},{value,''},{type,text}]}]}]}
+-module(mod_example).
+
+-behaviour(dasherl_handler).
+
+-export([layout/0, callbacks/0, my_callback_handler/1]).
+
+layout() ->
+    Input = dasherl_components:input([{value, 'initial value'}, {type, 'text'}, {id, 'my-id'}]),
+    Div = dasherl_components:divc([{id, 'my-div'}]),
+    dasherl_components:divc([{children, [Input, Div]}]).
+
+callbacks() ->
+    Output = dasherl_dependencies:output('my-div', 'children'),
+    Input = dasherl_dependencies:input('my-id', 'value'),
+    [{Output, [Input], 'update_output_div', ?MODULE, my_callback_handler}].
+
+my_callback_handler({InputValue}) ->
+    Retval = "You've entered " ++ InputValue,
+    list_to_atom(Retval).
 ```
 
-In the above example the div is an html dash component containing an input text core dash component, so now, how render this in dash server?, the answer is simple: a route.
-
-Let's create a new route and set the div as main layout:
+Now in the dasherl console, start the release, after that start the gunicorn worker, this not start the wsgi server, only prepare to compile module and setup all the environment:
 
 ```erlang
-(dasherl@hurakann)3> dasherl_gunicorn_worker:setup_route(Pid, <<"/my-dasherl-route">>, Div).
+(dasherl@zgbjgg)1> {ok, Server} = dasherl_gunicorn_worker:start_link([]).
+{ok,<0.358.0>}
+20:16:41.828 [info] gunicorn is up and running at linked process: ok
+```
+
+Next compile the module above defined, in this case, dasherl needs an url to serve the content:
+
+```erlang
+(dasherl@zgbjgg)2> dasherl:compile(Server, "/my-route", mod_example).
 ok
 ```
 
-Notice that third parameter is the recently div created from erlang. Now navigate to http://127.0.0.1:8000/my-dasherl-route and the input text should be rendered. To check supported components check `dasherl_components` module.
+Finally run the gunicorn server and go to your browser at: http://127.0.0.1:8000/my-route and you will see the same app as python:
+
+```erlang
+(dasherl@zgbjgg)3> dasherl_gunicorn_worker:run_server(Server).
+ok
+```
+
+Nice eh? enjoy!!.
 
 ### @TODO
 
-* Support callbacks decorator from Erlang.
+* More complex examples: how crossfiltering using jun.
+* Support states into callbacks.
 
 #### Authors
 
