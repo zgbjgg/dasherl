@@ -1,6 +1,6 @@
 # dasherl
 
-**Dasherl** - A deployment environmentt and builder for Dash apps running from Erlang/Elixir
+**Dasherl** - A deployment environment and builder for Dash apps running from Erlang/Elixir
 
 [![Hex.pm](https://img.shields.io/hexpm/v/dasherl.svg)](https://hex.pm/packages/dasherl)
 [![Build Status](https://travis-ci.org/zgbjgg/dasherl.svg?branch=master)](https://travis-ci.org/zgbjgg/dasherl)
