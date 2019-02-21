@@ -6,7 +6,7 @@
 -export([start_link/1,
     stop/1,
     run_server/1,
-    setup_callback/3]).
+    setup_callback/4]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -34,8 +34,8 @@ run_server(Pid) ->
 stop(Pid) ->
     gen_server:call(Pid, stop_link).
 
-setup_callback(Pid, Outputs, Inputs) ->
-    gen_server:call(Pid, {setup_callback, Outputs, Inputs}).
+setup_callback(Pid, Outputs, Inputs, Bind) ->
+    gen_server:call(Pid, {setup_callback, Outputs, Inputs, Bind}).
 
 init(Settings) ->
     process_flag(trap_exit, true),
@@ -65,11 +65,11 @@ init(Settings) ->
             {stop, Error}
     end.
 
-handle_call({setup_callback, Outputs, Inputs}, _From, State) ->
+handle_call({setup_callback, Outputs, Inputs, Bind}, _From, State) ->
     % @WARNING this only should work when gunicorn is not running, so setup MUST be called
     % before run server.
     PyPid = State#state.py_pid,
-   case catch python:call(PyPid, dasherl, setup_callback, [Outputs, Inputs, 'BABEL']) of
+   case catch python:call(PyPid, dasherl, setup_callback, [Outputs, Inputs, Bind]) of
         {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
             {reply, {error, {Class, Argument}}, State};
         "ok"                                             ->
