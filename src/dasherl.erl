@@ -7,6 +7,13 @@
 % module to be available to compile should implement the behaviour
 % of dasherl base behaviour
 compile(Server, Path, Mod) when is_pid(Server) ->
+    % mod MUST implement the handler behaviour
+    ModInfo = erlang:apply(Mod, module_info, []),
+    ModAttrs = proplists:get_value(attributes, ModInfo, []),
+    case proplists:get_value(behaviour, ModAttrs, none) of
+        [dasherl_handler] -> ok;
+        none              -> throw(mod_should_implement_handler_behaviour)
+    end,
     % first to all setup routes into router using layout from $mod
     Layout = erlang:apply(Mod, layout, []),
     case dasherl_worker:compile_layout(Layout) of
