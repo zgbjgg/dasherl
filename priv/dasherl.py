@@ -11,13 +11,17 @@ from dash.dependencies import Input, Output
 import dash
 
 # imports used for gunicorn base
-import multiprocessing
 import gunicorn.app.base
 from gunicorn.six import iteritems
+import sys
 
 # in the state store the key/value as dictionary
 # holding the gunicorn process and the dash app
 state = {}
+
+# manage routing to layouts and callbacks
+import dasherl_router
+import dasherl_callback_handler
 
 def initialize(workers, bind, external_stylesheets, appid):
     # define main app and prepare to run
@@ -27,11 +31,6 @@ def initialize(workers, bind, external_stylesheets, appid):
 
     # the flask app
     server = app.server
-
-    # this dictionary is used globally since can be modified outside
-    # the child process. This should be join to the dict in manager
-    global routes
-    routes = {}
 
     # define the main layout
     app.layout = html.Div([
@@ -45,11 +44,10 @@ def initialize(workers, bind, external_stylesheets, appid):
     @app.callback(Output('page-content', 'children'),
                   [Input('url', 'pathname')])
     def display_page(pathname):
-        # render = dasherl_router.render_layout(pathname)
         if pathname is not None:
-            layout = routes.get(pathname, None)
+            layout = dasherl_router.render_layout(pathname)
             if layout is None:
-                return '404 NOT FOUND by @dasherl'
+               return '404 NOT FOUND by @dasherl'
             else:
                 return layout
         else:
@@ -76,81 +74,30 @@ def initialize(workers, bind, external_stylesheets, appid):
     options = {
         'bind': bind,
         'workers': workers,
-        'loglevel': 'critical'
+        'loglevel': 'critical',
+        'daemon': True,
+        'pidfile': '/tmp/dasherl_gunicorn.pid'
     }
 
     application = DasherlApplication(server, options)
     state[appid] = application
     return 'ok'
 
-# in order to run the application, keep it into a process,
+# in order to run the application, keep it into a process from erlang side,
 # check for key stored in state (for appid), and run.
-# This will hold a separated process running with gunicorn, for that
-# reason share an object to use the routes
-def run(appid, pid):
+def run(appid):
     application = state[appid]
+    sys.exit(application.run())
 
-    # create manager and start the dict
-    manager = multiprocessing.Manager()
-
-    # maybe some routes was loaded before process start, then copy that
-    # to shared object in order to work into process
-    global routes
-    preloaded_routes = routes
-    routes = manager.dict()
-
-    if not isinstance(preloaded_routes, multiprocessing.managers.DictProxy):
-        for k, v in preloaded_routes.iteritems():
-            routes[k] = v
-
-    # create the process and start without joining!
-    process = multiprocessing.Process(name=appid, target=application.run)
-    state[pid] = process
-    process.start()
+# setup callbacks (MUST be called before run server)
+def setup_callback(outputs, inputs, key):
+    app.callback(outputs, inputs)(_callback_handler(key))
     return 'ok'
 
-# stops the running process and clean state
-def stop(pid):
-    process = state.get(pid, None)
-    if process is not None:
-        process.terminate()
-        state.pop(pid)
-        return 'ok'
-    else:
-        return 'no_proc'
-
-# add a route with content, the content will be a complex
-# layout made from erlang side using custom components.
-def setup_route(route, layout):
-    routes[route] = layout # simple assignment
-    return 'ok'
-
-# remove a route already loaded into routes.
-def del_route(route):
-    layout = routes.get(route, None)
-    if layout is not None:
-        del routes[route]
-        return 'ok'
-    else:
-        return 'ok'
-
-# setup a callback for the app, this MUST be called before app
-# is running since for now cannot work at runtime!.
-def setup_callback(outputs, inputs, fun):
-    # check if fun is a valid lambda, otherwise raise an exception
-    fun0 = islambda_from_erl(fun)
-    app.callback(outputs, inputs)(fun0)
-    return 'ok'
-
-# simple receiver for a lambda in string mode and pass
-# back to opaque term, it means a valid evaluated lambda
-# into py environment, taken from: https://github.com/zgbjgg/jun/blob/master/priv/jun_pandas.py#L187
-def islambda_from_erl(fn):
-    try:
-        fn0 = eval(fn)
-        if ( callable(fn0) and fn0.__name__ == '<lambda>' ):
-            return fn0
-        else:
-            raise Exception('err.invalid.dasherl.Lambda', 'not a lambda valid function from erl instance')
-    except:
-        raise Exception('err.invalid.dasherl.lambda', 'not a lambda valid function from erl instance')
+# a default callback handler, on each event call to desired
+# config in erlang side, process data and return the response
+def _callback_handler(key):
+    def callback(*args):
+        response = dasherl_callback_handler.response(key, args)
+        return response
+    return callback

@@ -9,8 +9,7 @@
     test_dasherl_gunicorn_worker_call/1,
     test_dasherl_gunicorn_worker_cast/1,
     test_dasherl_app_stop/1,
-    test_dasherl_gunicorn_worker_run_server/1,
-    test_dasherl_gunicorn_worker_stop_server/1]).
+    test_dasherl_gunicorn_worker_run_server/1]).
 
 all() ->
     [test_dasherl_app,
@@ -18,18 +17,21 @@ all() ->
      test_dasherl_gunicorn_worker_call,
      test_dasherl_gunicorn_worker_cast,
      test_dasherl_gunicorn_worker_run_server,
-     test_dasherl_gunicorn_worker_stop_server,
      test_dasherl_app_stop].
 
 init_per_testcase(_, _Config) ->
     % start a dasherl gunicorn worker
+    ok = application:set_env(dasherl, routes, []),
     {ok, Pid} = dasherl_gunicorn_worker:start_link([{bind, "127.0.0.1:8000"},
         {workers, 1}]),
     [{worker, Pid}].
 
 end_per_testcase(_, Config) ->
     Pid = proplists:get_value(worker, Config),
-    ok = dasherl_gunicorn_worker:stop(Pid),
+    ok = case erlang:is_process_alive(Pid) of
+        true  -> dasherl_gunicorn_worker:stop(Pid);
+        false -> ok
+    end,
     ok.
 
 test_dasherl_app(_) ->
@@ -51,11 +53,6 @@ test_dasherl_app_stop(_) ->
 test_dasherl_gunicorn_worker_run_server(Config) ->
     Pid = proplists:get_value(worker, Config),
     ?assertEqual(ok, dasherl_gunicorn_worker:run_server(Pid)).
-
-test_dasherl_gunicorn_worker_stop_server(Config) ->
-    Pid = proplists:get_value(worker, Config),
-    ok = dasherl_gunicorn_worker:run_server(Pid),
-    ?assertEqual(ok, dasherl_gunicorn_worker:stop_server(Pid)).
 
 % just to increment % of coverage
 
