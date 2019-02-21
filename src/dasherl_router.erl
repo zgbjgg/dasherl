@@ -51,16 +51,13 @@ handle_call(stop_link, _From, State) ->
 handle_call({render, Path}, _From, State) ->
     % since a plist, just pick with proplists
     PyLayout = case lists:keyfind(Path, 1, State#state.routes) of
-        {_Path, Layout} ->
-            % compile layout into pyterm
-            {ok, PytLayout} = dasherl_worker:compile_layout(Layout),
-            PytLayout;
+        {_Path, Layout} -> Layout;
         false           -> no_such_layout
     end,
     {reply, PyLayout, State};
 
-handle_call({add, Path, App}, _From, State=#state{routes = Routes}) ->
-    {reply, ok, State#state{routes = Routes ++ [{Path, App}]}};
+handle_call({add, Path, Layout}, _From, State=#state{routes = Routes}) ->
+    {reply, ok, State#state{routes = Routes ++ [{Path, Layout}]}};
 
 handle_call({remove, Path}, _From, State=#state{routes = Routes}) ->
     NewRoutes = case lists:keyfind(Path, 1, Routes) of
