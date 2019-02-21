@@ -85,8 +85,6 @@ handle_call(run_server, _From, State) ->
 
     {reply, ok, State#state{gunicorn_pid = PidGunicorn}};
 handle_call(stop_link, _From, State) ->
-    ok = stop_signal(State#state.gunicorn_pid),
-    ok = python:stop(State#state.py_pid),
     {stop, normal, ok, State};
 handle_call(_Request, _From, State) ->    
     {reply, ok, State}.
