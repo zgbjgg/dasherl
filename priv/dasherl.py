@@ -13,6 +13,7 @@ import dash
 # imports used for gunicorn base
 import gunicorn.app.base
 from gunicorn.six import iteritems
+import sys
 
 # in the state store the key/value as dictionary
 # holding the gunicorn process and the dash app
@@ -73,7 +74,9 @@ def initialize(workers, bind, external_stylesheets, appid):
     options = {
         'bind': bind,
         'workers': workers,
-        'loglevel': 'critical'
+        'loglevel': 'critical',
+        'daemon': True,
+        'pidfile': '/tmp/dasherl_gunicorn.pid'
     }
 
     application = DasherlApplication(server, options)
@@ -84,7 +87,7 @@ def initialize(workers, bind, external_stylesheets, appid):
 # check for key stored in state (for appid), and run.
 def run(appid):
     application = state[appid]
-    application.run()
+    sys.exit(application.run())
 
 # setup callbacks (MUST be called before run server)
 def setup_callback(outputs, inputs, key):
