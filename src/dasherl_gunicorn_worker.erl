@@ -55,11 +55,10 @@ init(Settings) ->
             MonRef = erlang:monitor(process, PyPid),
 
             % initialize gunicorn with dasherl and hold in a process
-            PidGunicorn = initialize_from_scratch(PyPid, Workers, Bind, Stylesheets),
-            lager:info("gunicorn is up and running at linked process: ~p", [PidGunicorn]),
+            ok = initialize_from_scratch(PyPid, Workers, Bind, Stylesheets),
 
             {ok, #state{py_pid = PyPid, mon_ref = MonRef, workers = Workers,
-                bind = Bind, gunicorn_pid = PidGunicorn}};
+                bind = Bind}};
         Error      ->
             lager:error("cannot initializes py due to ~p", [Error]),
             {stop, Error}
@@ -69,7 +68,7 @@ handle_call({setup_callback, Outputs, Inputs, Bind}, _From, State) ->
     % @WARNING this only should work when gunicorn is not running, so setup MUST be called
     % before run server.
     PyPid = State#state.py_pid,
-   case catch python:call(PyPid, dasherl, setup_callback, [Outputs, Inputs, Bind]) of
+    case catch python:call(PyPid, dasherl, setup_callback, [Outputs, Inputs, Bind]) of
         {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
             {reply, {error, {Class, Argument}}, State};
         "ok"                                             ->
