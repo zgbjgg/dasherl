@@ -130,4 +130,5 @@ stop_signal(Pid) ->
     exit(Pid, kill),
     [UnixPid|_] = string:tokens(os:cmd("cat " ++ ?DEFAULT_UNIX_PID), "\n"),
     _ = os:cmd("kill -9 " ++ UnixPid),
+    _ = file:delete(?DEFAULT_UNIX_PID),
     ok.
