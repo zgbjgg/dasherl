@@ -6,6 +6,9 @@ from dash.dependencies import Input, Output
 # import erlang helpers
 from erlport.erlterms import Atom
 from erlport.erlang import set_encoder, set_decoder
+
+# utilities
+import dasherl_utils
  
 def compile(layout):
     """Simple compile erlterm into pyterm and return as pickled data"""
@@ -53,13 +56,13 @@ def _parse_component_nested(component):
 # to dash core
 def _to_dash_core_component(fn, keywords):
     fn_core = getattr(dcc, fn)
-    kwargs = _build_kwargs(keywords)
+    kwargs = dasherl_utils.build_kwargs(keywords)
     return fn_core(**kwargs)
 
 # to dash html 
 def _to_dash_html_component(fn, keywords):
     fn_html = getattr(html, fn)
-    kwargs = _build_kwargs(keywords)
+    kwargs = dasherl_utils.build_kwargs(keywords)
     return fn_html(**kwargs)
 
 # to dash dependency
@@ -74,7 +77,3 @@ def _to_dash_output(component, event):
 
 def _to_dash_input(component, event):
     return Input(component, event)
-
-def _build_kwargs(keywords):
-    kwargs = dict([ (k, v) for (k, v) in keywords ])
-    return kwargs
