@@ -120,9 +120,12 @@ ok
 
 Nice eh? enjoy!!.
 
+### Dash custom app
+
+In this repo you will find a custom app built in purely erlang using dasherl and jun: https://github.com/zgbjgg/dasherl-custom-app
+
 ### @TODO
 
-* More complex examples: how crossfiltering using jun.
 * Support states into callbacks.
 
 #### Authors
