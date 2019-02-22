@@ -1,6 +1,6 @@
 {application, dasherl,
  [{description, "Dasherl - A deployment environment and builder for Dash apps running from Erlang/Elixir"},
-  {vsn, "0.2.0"},
+  {vsn, "0.2.1"},
   {registered, []},
   {mod, {dasherl_app, []}},
   {applications,
