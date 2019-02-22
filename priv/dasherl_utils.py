@@ -6,7 +6,7 @@ def build_kwargs(keywords):
 
 def _build_list_kwargs(keywords):
     if isinstance(keywords, list) and are_keywords(keywords) == True:
-        kwargs = [ _build_kwargs(item) for item in keywords ]
+        kwargs = [ build_kwargs(item) for item in keywords ]
         return kwargs
     else:
         return keywords
