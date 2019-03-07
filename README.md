@@ -79,7 +79,7 @@ The above app can be translated to dasherl into erlang module as follows:
 
 -behaviour(dasherl_handler).
 
--export([layout/0, callbacks/0, my_callback_handler/1]).
+-export([layout/0, callbacks/0, my_callback_handler/2]).
 
 layout() ->
     Input = dasherl_components:input([{value, 'initial value'}, {type, 'text'}, {id, 'my-id'}]),
@@ -91,7 +91,7 @@ callbacks() ->
     Input = dasherl_dependencies:input('my-id', 'value'),
     [{Output, [Input], 'update_output_div', ?MODULE, my_callback_handler}].
 
-my_callback_handler({InputValue}) ->
+my_callback_handler(_Bind, {InputValue}) ->
     Retval = "You've entered " ++ InputValue,
     list_to_atom(Retval).
 ```
