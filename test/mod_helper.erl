@@ -2,7 +2,7 @@
 
 -behaviour(dasherl_handler).
 
--export([layout/0, callbacks/0, update_output_div/1]).
+-export([layout/0, callbacks/0, update_output_div/2]).
 
 layout() ->
     Input = dasherl_components:input([{value, 'initial value'}, {type, 'text'}, {id, 'my-id'}]),
@@ -14,6 +14,6 @@ callbacks() ->
     Input = dasherl_dependencies:input('my-id', 'value'),
     [{Output, [Input], 'update_output_div', ?MODULE, update_output_div}].
 
-update_output_div({InputValue}) ->
+update_output_div(_Bind, {InputValue}) ->
     Retval = "You've entered " ++ InputValue,
     list_to_atom(Retval).
