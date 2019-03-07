@@ -46,7 +46,7 @@ handle_call(stop_link, _From, State) ->
 handle_call({callback, Bind, Args}, _From, State) ->
     % since a plist, just pick with proplists
     Response = case lists:keyfind(Bind, 1, State#state.callbacks) of
-        {_Bind, {Mod, Fun}} -> erlang:apply(Mod, Fun, [Args]);
+        {Bind, {Mod, Fun}} -> erlang:apply(Mod, Fun, [Bind, Args]);
         false               -> error_in_response
     end,
     {reply, Response, State};
