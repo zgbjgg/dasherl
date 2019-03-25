@@ -25,6 +25,8 @@ def response(key, args):
 # parse response, for now only figure data are parsed, other
 # data keep in the same format
 def _parse_response(response):
+    if isinstance(response, list):
+        response = tuple([_parse_response(r) for r in response])
     if isinstance(response, tuple) and len(response) == 2:
         tag = response[0]
         traces = response[1]
