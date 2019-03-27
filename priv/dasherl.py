@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 # import core dash components
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table as ddt
 from dash.dependencies import Input, Output
 
 # define the behaviour of the main app when launching this file,

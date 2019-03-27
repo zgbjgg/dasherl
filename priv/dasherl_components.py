@@ -1,6 +1,7 @@
 # import for dash components html and core
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table as ddt
 from dash.dependencies import Input, Output
 
 # import erlang helpers
@@ -9,7 +10,8 @@ from erlport.erlang import set_encoder, set_decoder
 
 # utilities
 import dasherl_utils
- 
+import pandas as pd
+
 def compile(layout):
     """Simple compile erlterm into pyterm and return as pickled data"""
     return (Atom("ok"), layout)
@@ -55,8 +57,16 @@ def _parse_component_nested(component):
 
 # to dash core
 def _to_dash_core_component(fn, keywords):
-    fn_core = getattr(dcc, fn)
-    kwargs = dasherl_utils.build_kwargs(keywords)
+    # datatable is not a core component, check to apply the correct value
+    if fn == 'DataTable':
+      fn_core = getattr(ddt, fn)
+      kwargs = dasherl_utils.build_kwargs(keywords)
+      data = kwargs.get("data")
+      if isinstance(data, pd.core.frame.DataFrame):
+        kwargs["data"] = data.to_dict("rows")
+    else:
+      fn_core = getattr(dcc, fn)
+      kwargs = dasherl_utils.build_kwargs(keywords)
     return fn_core(**kwargs)
 
 # to dash html 
