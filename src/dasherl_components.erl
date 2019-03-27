@@ -25,7 +25,8 @@
     upload/1,
     tabs/1, tab/1,
     graph/1,
-    confirm_dialog/1]).
+    confirm_dialog/1,
+    datatable/1]).
 
 % html
 
@@ -99,3 +100,6 @@ graph(Keywords) ->
 
 confirm_dialog(Keywords) ->
     #dasherl_core_component{type='ConfirmDialog', children=Keywords}.
+
+datatable(Keywords) ->
+    #dasherl_core_component{type='DataTable', children=Keywords}.
