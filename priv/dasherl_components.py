@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # import for dash components html and core
 import dash_core_components as dcc
 import dash_html_components as html

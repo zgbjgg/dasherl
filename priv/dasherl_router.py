@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # The code in this py file is separated because there are 
 # some errors using the interface with the main app.
 

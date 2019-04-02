@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # utilities for dasherl
 
 def build_kwargs(keywords):
