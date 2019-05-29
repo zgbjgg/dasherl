@@ -76,7 +76,7 @@ handle_call({setup_callback, Outputs, Inputs, Bind}, _From, State) ->
     end;
 handle_call(run_server, _From, State) ->
     PyPid = State#state.py_pid,
-    Appid = list_to_binary(pid_to_list(self())),
+    Appid = make_pidfile(),
 
     % from python side this call blocks the entire port, so hold in a separate
     % process and keep this gen_server normal state
@@ -98,9 +98,9 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, State) ->
-    ok = stop_signal(State#state.gunicorn_pid),
     % when finish process just stop py_pid
     ok = python:stop(State#state.py_pid),
+    ok = stop_signal(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -114,7 +114,7 @@ code_change(_OldVsn, State, _Extra) ->
 % can run after the entire gen_server was initialized correctly 
 initialize_from_scratch(PyPid, Workers, Bind, Stylesheets) ->
     BindAtom = list_to_atom(Bind),
-    Appid = list_to_binary(pid_to_list(self())),
+    Appid = make_pidfile(),
     case catch python:call(PyPid, dasherl, initialize, [Workers, BindAtom, Stylesheets, Appid]) of
         {'EXIT', {{python, Class, Argument, _Stack}, _}} ->
             {error, {Class, Argument}};
@@ -125,12 +125,15 @@ initialize_from_scratch(PyPid, Workers, Bind, Stylesheets) ->
 % since is a blocking process, gunicorn cannot be stopped just with py
 % so stop process linked, after that stop with signal handler using
 % sigterm.
-stop_signal(Pid) ->
-    case is_pid(Pid) of
-        true  -> exit(Pid, kill);
-        false -> ok
-    end,
-    [UnixPid|_] = string:tokens(os:cmd("cat " ++ ?DEFAULT_UNIX_PID), "\n"),
+stop_signal() ->
+    StrSelf = binary_to_list(make_pidfile()),
+    [UnixPid|_] = string:tokens(os:cmd("cat " ++ ?DEFAULT_UNIX_PID(StrSelf)), "\n"),
+    lager:info("preparing to kill unixpid for gunicorn at ~p~n", UnixPid),
     _ = os:cmd("kill -9 " ++ UnixPid),
-    _ = file:delete(?DEFAULT_UNIX_PID),
+    _ = file:delete(?DEFAULT_UNIX_PID(StrSelf)),
     ok.
+
+make_pidfile() ->
+    Self = pid_to_list(self()),
+    SelfN = re:replace(Self, "^<|>$", "", [{return, list}, global]),
+    list_to_binary(SelfN).
