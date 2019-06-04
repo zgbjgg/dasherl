@@ -26,7 +26,8 @@
     tabs/1, tab/1,
     graph/1,
     confirm_dialog/1,
-    datatable/1]).
+    datatable/1,
+    interval/1]).
 
 % html
 
@@ -103,3 +104,6 @@ confirm_dialog(Keywords) ->
 
 datatable(Keywords) ->
     #dasherl_core_component{type='DataTable', children=Keywords}.
+
+interval(Keywords) ->
+    #dasherl_core_component{type='Interval', children=Keywords}.
