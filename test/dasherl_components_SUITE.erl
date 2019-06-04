@@ -27,7 +27,9 @@
     test_dasherl_tabs/1,
     test_dasherl_tab/1,
     test_dasherl_graph/1,
-    test_dasherl_confirm_dialog/1]).
+    test_dasherl_confirm_dialog/1,
+    test_dasherl_datatable/1,
+    test_dasherl_interval/1]).
 
 all() ->
     [test_dasherl_divc,
@@ -52,7 +54,9 @@ all() ->
      test_dasherl_tabs,
      test_dasherl_tab,
      test_dasherl_graph,
-     test_dasherl_confirm_dialog].
+     test_dasherl_confirm_dialog,
+     test_dasherl_datatable,
+     test_dasherl_interval].
 
 init_per_suite(_Config) ->
     [].
@@ -151,3 +155,11 @@ test_dasherl_graph(_) ->
 test_dasherl_confirm_dialog(_) ->
     ConfirmDialog = dasherl_components:confirm_dialog([]),
     ?assertEqual({dasherl_core_component, 'ConfirmDialog', []}, ConfirmDialog).
+
+test_dasherl_datatable(_) ->
+    DataTable = dasherl_components:datatable([]),
+    ?assertEqual({dasherl_core_component, 'DataTable', []}, DataTable).
+
+test_dasherl_interval(_) ->
+    Interval = dasherl_components:interval([]),
+    ?assertEqual({dasherl_core_component, 'Interval', []}, Interval).
