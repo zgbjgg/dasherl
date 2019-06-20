@@ -11,7 +11,7 @@ def _check_value(k, v):
     if isinstance(v, list):
         kwargs = [ _build_list_kwargs(item) for item in v ]
         # since other args than children should be dicts
-        if k != 'children':
+        if k != 'children' and k != 'options' and k != 'columns' and k != 'data':
             return dict(kwargs)
         else:
             return kwargs
