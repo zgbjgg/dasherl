@@ -8,6 +8,7 @@
 from erlport.erlterms import Atom
 from erlport.erlang import call
 import pandas as pd
+import dash
 
 # import utils
 import dasherl_utils
@@ -18,17 +19,16 @@ def response(key, args):
     try:
         response = call(Atom("dasherl_binding"), Atom("callback"), [key, args])
 
-        # parse response in order to check if comes a figure in it
-        response = _parse_response(response)
-
         # maybe response breaks!
         if response == 'error_in_response':
-            return 'ERROR!'
+            raise dash.exceptions.PreventUpdate
         else:
+            # parse response in order to check if comes a figure in it
+            response = _parse_response(response)
             return response
     except BaseException, ex:
         print(str(ex))
-        return 'ERROR!'
+        raise dash.exceptions.PreventUpdate
 
 # parse response, for now only figure data are parsed, other
 # data keep in the same format
