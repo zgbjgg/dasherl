@@ -78,6 +78,8 @@ def initialize(workers, bind, external_stylesheets, appid):
     options = {
         'bind': bind,
         'workers': workers,
+        'max-requests': 1000,
+        'threads': 10,
         'loglevel': 'critical',
         'daemon': True,
         'pidfile': '/tmp/dasherl_' + appid + '.pid'
