@@ -27,7 +27,11 @@ stop() ->
     gen_server:call(?MODULE, stop_link).
 
 callback(Bind, Args) ->
-    gen_server:call(?MODULE, {callback, Bind, Args}).
+    try
+        gen_server:call(?MODULE, {callback, Bind, Args})
+    catch _:_ ->
+        error_in_response
+    end.
 
 add_callback(Bind, Mod, Fun) ->
     gen_server:call(?MODULE, {add, Bind, Mod, Fun}).
