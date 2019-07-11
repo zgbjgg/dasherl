@@ -128,7 +128,7 @@ initialize_from_scratch(PyPid, Workers, Bind, Stylesheets) ->
 stop_signal() ->
     StrSelf = binary_to_list(make_pidfile()),
     [UnixPid|_] = string:tokens(os:cmd("cat " ++ ?DEFAULT_UNIX_PID(StrSelf)), "\n"),
-    lager:info("preparing to kill unixpid for gunicorn at ~p~n", UnixPid),
+    lager:info("preparing to kill unixpid for gunicorn at ~p~n", [UnixPid]),
     _ = os:cmd("kill -9 " ++ UnixPid),
     _ = file:delete(?DEFAULT_UNIX_PID(StrSelf)),
     ok.
