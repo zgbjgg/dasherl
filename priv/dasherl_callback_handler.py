@@ -36,7 +36,13 @@ def _parse_response(response):
     if isinstance(response, list):
         response = tuple([_parse_response(r) for r in response])
     if isinstance(response, pd.core.frame.DataFrame):
-        response = response.to_dict("rows")
+        response = response.to_dict('records')
+        # format floats nicely since this could be difficult from erlang side
+        for row in response:
+            for key, value in row.iteritems():
+                if isinstance(value, float):
+                    value = '{:,.2f}'.format(value)
+                row[key] = value
     elif isinstance(response, tuple) and len(response) == 2:
         tag = response[0]
         traces = response[1]
