@@ -6,10 +6,14 @@
 [![Build Status](https://travis-ci.org/zgbjgg/dasherl.svg?branch=master)](https://travis-ci.org/zgbjgg/dasherl)
 [![Codecov](https://img.shields.io/codecov/c/github/zgbjgg/dasherl.svg)](https://codecov.io/gh/zgbjgg/dasherl)
 [![License: MIT](https://img.shields.io/github/license/zgbjgg/dasherl.svg)](https://raw.githubusercontent.com/zgbjgg/dasherl/master/LICENSE)
+[![Hex.pm](https://img.shields.io/hexpm/dt/dasherl.svg)](https://hex.pm/packages/dasherl)
+[![Hex.pm](https://img.shields.io/hexpm/dw/dasherl.svg)](https://hex.pm/packages/dasherl)
 
 Dasherl is a deployment environment (using gunicorn for now) for dash apps using Erlang or Elixir, but also it's a builder for the Dash apps so you can write erlang code (just through nested records) and setup the route to use the erlang code then Dasherl can handle the requests to erlang code as serve as a python code (using dash).
 
 This project is under development and should not be used in production, it's not ready for that.
+
+**IF YOU ARE LOOKING FOR CREATING ANALYTICAL APPS WITH ELIXIR TRY `QUETZAL`, A PURE LIBRARY WRITTEN IN ELIXIR :bird: !!**
 
 ### Creating an isolated environment
 
